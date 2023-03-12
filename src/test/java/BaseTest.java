@@ -1,41 +1,52 @@
+import api.client.CourierClient;
+import api.client.OrdersClient;
+import io.qameta.allure.Step;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
+import model.Courier;
+import model.CourierResponse;
 import org.junit.After;
 import org.junit.Before;
 
-public class Steps {
+import java.util.Random;
 
-    String bearerToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2M2EwNTlmM2QzYjg2YTAwM2Q2ODJmNzYiLCJpYXQiOjE2NzY0NzY5OTgsImV4cCI6MTY3NzA4MTc5OH0.eIBvdlijIzWe0giUUWy2hy2C6CHgjb4MGEmnLYxep5E";
+import static io.restassured.RestAssured.given;
+
+public class BaseTest {
+
+    CourierClient courierClient = new CourierClient();
 
     @Before
     public void setUp() {
-        RestAssured.baseURI = "https://qa-scooter.praktikum-services.ru/";
+        RestAssured.baseURI = "https://qa-scooter.praktikum-services.ru";
     }
 
-    @After
-    public void cleanUp() {
-    }
-
+    @Step
     public void printResponseBody(Response response) {
         System.out.println(response.body().asString());
     }
 
+    @Step
     public void checkStatusCode200(Response response) {
         response.then().statusCode(200);
     }
 
+    @Step
     public void checkStatusCode201(Response response) {
         response.then().statusCode(201);
     }
 
+    @Step
     public void checkStatusCode400(Response response) {
         response.then().statusCode(400);
     }
 
+    @Step
     public void checkStatusCode404(Response response) {
         response.then().statusCode(404);
     }
 
+    @Step
     public void checkStatusCode409(Response response) {
         response.then().statusCode(409);
     }

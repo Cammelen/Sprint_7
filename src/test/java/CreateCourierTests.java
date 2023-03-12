@@ -1,99 +1,94 @@
 import io.qameta.allure.junit4.DisplayName;
 import io.restassured.response.Response;
 import model.Courier;
+import model.CourierResponse;
+import org.junit.After;
 import org.junit.Test;
 import java.util.Random;
-import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 
 @DisplayName("Создание курьера")
-public class CreateCourierTests extends Steps {
+public class CreateCourierTests extends BaseTest {
 
-    private final Steps steps = new Steps();
+    private BaseTest steps = new BaseTest();
 
-    Courier courier = new Courier("Jako" + new Random().nextInt(1000), "1111", "Jan");
-    Courier courierWithoutFirstName = new Courier("Jako" + new Random().nextInt(1000), "1111");
-    Courier courierOnceLogin = new Courier("Jako" + new Random().nextInt(1000));
+    Courier courier = new Courier("Jako" + new Random().nextInt(100000), "1111", "Jan");
+    Courier courierWithoutFirstName = new Courier("Jako" + new Random().nextInt(100000), "1111");
+    Courier courierOnceLogin = new Courier("Jako" + new Random().nextInt(100000));
     Courier courierOncePassword = new Courier("1111");
 
     @Test
     @DisplayName("Успешное создание нового курьера")
     public void createCourier() {
-        Response response = given()
-                .header("Content-type", "application/json")
-                .auth().oauth2(bearerToken)
-                .body(courier)
-                .post("/api/v1/courier");
-        steps.checkStatusCode201(response);
-        response.then().assertThat().body("ok", equalTo(true));
+        Response response = courierClient.checkCreateCourierApi(courier);
         System.out.println(courier.getLogin());
         System.out.println(courier.getPassword());
         System.out.println(courier.getFirstName());
-        System.out.println(courier.getId());
+        steps.checkStatusCode201(response);
         steps.printResponseBody(response);
+        response.then().assertThat().body("ok", equalTo(true));
     }
 
     @Test
     @DisplayName("Нельзя создать двух одинаковых курьеров")
     public void createExistCourier() {
-        given()
-                .header("Content-type", "application/json")
-                .auth().oauth2(bearerToken)
-                .body(courier)
-                .post("/api/v1/courier");
-
-        Response response = given()
-                .header("Content-type", "application/json")
-                .auth().oauth2(bearerToken)
-                .body(courier)
-                .post("/api/v1/courier");
-        steps.checkStatusCode409(response);
-        response.then().assertThat().body("message", equalTo("Этот логин уже используется. Попробуйте другой."));
+        courierClient.checkCreateCourierApi(courier);
+        Response response = courierClient.checkCreateCourierApi(courier);
         System.out.println(courier.getLogin());
+        steps.checkStatusCode409(response);
         steps.printResponseBody(response);
+        response.then().assertThat().body("message", equalTo("Этот логин уже используется. Попробуйте другой."));
     }
 
     @Test
     @DisplayName("Успешное создание курьера без имени")
     public void createCourierWithoutFirstName() {
-        Response response = given()
-                .header("Content-type", "application/json")
-                .auth().oauth2(bearerToken)
-                .body(courierWithoutFirstName)
-                .post("/api/v1/courier");
-        steps.checkStatusCode201(response);
-        response.then().assertThat().body("ok", equalTo(true));
+        Response response = courierClient.checkCreateCourierApi(courierWithoutFirstName);
         System.out.println(courierWithoutFirstName.getLogin());
         System.out.println(courierWithoutFirstName.getPassword());
         System.out.println(courierWithoutFirstName.getFirstName());
+        steps.checkStatusCode201(response);
         steps.printResponseBody(response);
+        response.then().assertThat().body("ok", equalTo(true));
     }
 
     @Test
     @DisplayName("Нельзя создать курьера без пароля")
     public void createCourierOnceLogin() {
-        Response response = given()
-                .header("Content-type", "application/json")
-                .auth().oauth2(bearerToken)
-                .body(courierOnceLogin)
-                .post("/api/v1/courier");
-        steps.checkStatusCode400(response);
-        response.then().assertThat().body("message", equalTo("Недостаточно данных для создания учетной записи"));
+        Response response = courierClient.checkCreateCourierApi(courierOnceLogin);
         System.out.println(courierOnceLogin.getLogin());
+        steps.checkStatusCode400(response);
         steps.printResponseBody(response);
+        response.then().assertThat().body("message", equalTo("Недостаточно данных для создания учетной записи"));
     }
 
     @Test
     @DisplayName("Нельзя создать курьера без логина")
     public void createCourierOncePassword() {
-        Response response = given()
-                .header("Content-type", "application/json")
-                .auth().oauth2(bearerToken)
-                .body(courierOncePassword)
-                .post("/api/v1/courier");
-        steps.checkStatusCode400(response);
-        response.then().assertThat().body("message", equalTo("Недостаточно данных для создания учетной записи"));
+        Response response = courierClient.checkCreateCourierApi(courierOncePassword);
         System.out.println(courierOncePassword.getLogin());
+        steps.checkStatusCode400(response);
         steps.printResponseBody(response);
+        response.then().assertThat().body("message", equalTo("Недостаточно данных для создания учетной записи"));
+    }
+
+    @After
+    public void cleanUp() {
+
+        CourierResponse courierResponse = courierClient.checkLoginCourierApi(courier).as(CourierResponse.class);
+        Long idCourier = courierResponse.getId();
+        if (idCourier != null) {
+            courierClient.checkDeleteCourierApi(idCourier);
+        }
+
+        CourierResponse courierResponseWithoutFirstName = courierClient.checkLoginCourierApi(courierWithoutFirstName).as(CourierResponse.class);
+        Long idCourierWithoutFirstName = courierResponseWithoutFirstName.getId();
+        if (idCourierWithoutFirstName != null) {
+            courierClient.checkDeleteCourierApi(idCourierWithoutFirstName);
+        }
     }
 }
+
+
+
+
